@@ -1,0 +1,8 @@
+[package]
+name = "GasSim"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+uom = "0.37.0"
+dashmap = "7.0.0-rc2"
