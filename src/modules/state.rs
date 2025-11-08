@@ -7,26 +7,23 @@ use uom::si::f64::{AmountOfSubstance, DynamicViscosity, HeatCapacity,
                    MolarHeatCapacity, MolarMass, Pressure, Ratio,
                    SpecificHeatCapacity, ThermodynamicTemperature, Time,
                    Velocity, Volume, VolumeRate};
-use uom::si::heat_capacity::joule_per_kelvin;
-use uom::si::length::meter;
 use uom::si::mass_density::kilogram_per_cubic_meter;
 use uom::si::mass_rate::kilogram_per_second;
 use uom::si::molar_heat_capacity::joule_per_kelvin_mole;
 use uom::si::pressure::{bar};
 use uom::si::ratio::ratio;
 use uom::si::thermodynamic_temperature::{degree_celsius, kelvin};
-use uom::si::time::second;
 use crate::modules::Constants::{FitConst, NatConst};
 
 #[derive(Clone, Debug)]
 pub struct pTmx {
-    pub p: Pressure,                 // [Pa]
-    pub T: ThermodynamicTemperature, // [K]
-    pub m: MassRate,                 // [Kg/s]
-    pub H2: Ratio,                   // [-]
-    pub H2O: Ratio,                  // [-]
-    pub O2: Ratio,                   // [-]
-    pub N2: Ratio,                   // [-]
+    pub p: Pressure,
+    pub T: ThermodynamicTemperature,
+    pub m: MassRate,
+    pub H2: Ratio,
+    pub H2O: Ratio,
+    pub O2: Ratio,
+    pub N2: Ratio,
 }
 
 impl Default for pTmx {
