@@ -1,15 +1,19 @@
 use egui_snarl::{InPin, NodeId, OutPin, OutPinId, Snarl};
 use egui_snarl::ui::{PinInfo, SnarlViewer};
-use crate::nodes::collection::Node;
+use uom::si::f64::Time;
+use uom::si::time::second;
+use GasSim::modules::state::{pTmx, GasState};
+use crate::nodes::collection::{Node, NodeType};
 
 pub struct Viewer;
 
 impl Viewer {
-    fn value_of_outpin(snarl: &Snarl<Node>, out_pin: OutPinId) -> Option<f64> {
+    fn value_of_outpin(snarl: &Snarl<Node>, out_pin: OutPinId) -> Option<NodeType> {
         match &snarl[out_pin.node] {
-            Node::Number(v) => Some(*v),
-            Node::Add { sum } => Some(*sum),
+            Node::Number(v) => Some(NodeType::Number(*v)),
+            Node::Add { sum } => Some(NodeType::Number(*sum)),
             Node::Output => None,
+            Node::Boundary(gs) => Some(NodeType::GasState(gs.clone())),
         }
     }
 }
@@ -20,6 +24,7 @@ impl SnarlViewer<Node> for Viewer {
             Node::Number(_) => "Number".into(),
             Node::Add { .. } => "Add".into(),
             Node::Output => "Output".into(),
+            Node::Boundary(_) => "Boundary".into(),
         }
     }
 
@@ -35,23 +40,22 @@ impl SnarlViewer<Node> for Viewer {
             Node::Number(_) => "Number",
             Node::Add { .. } => "Add",
             Node::Output => "Output",
+            Node::Boundary(_) => "Boundary",
         };
 
-        let val_opt: Option<f64> = match snarl[node] {
-            Node::Number(v) => Some(v),
-            Node::Add { sum } => Some(sum),
+        let val_opt: Option<NodeType> = match snarl[node] {
+            Node::Number(v) => Some(NodeType::Number(v)),
+            Node::Add { sum } => Some(NodeType::Number(sum)),
             Node::Output => inputs
                 .get(0)
                 .and_then(|pin| pin.remotes.last())
                 .and_then(|r| Viewer::value_of_outpin(&*snarl, *r)),
+            Node::Boundary(ref gs) => Some(NodeType::GasState(gs.clone())),
         };
 
-        let value_text = match val_opt {
-            Some(v) => format!("{v:.3}"),
-            None => "None".to_owned(),
-        };
+        let value_text = val_opt.map(|v| v.header_string()).unwrap_or_else(|| "None".into());
 
-        ui.label(format!("{base}: {value_text}"));
+        ui.label(format!("{base}{value_text}"));
     }
 
     fn inputs(&mut self, node: &Node) -> usize {
@@ -59,6 +63,7 @@ impl SnarlViewer<Node> for Viewer {
             Node::Number(_) => 0,
             Node::Add { .. } => 2,
             Node::Output => 1,
+            Node::Boundary(_) => 0,
         }
     }
 
@@ -69,7 +74,7 @@ impl SnarlViewer<Node> for Viewer {
             .last()
             .and_then(|remote| Viewer::value_of_outpin(snarl, *remote));
         let value_text: String = match val {
-            Some(v) => format!("{v:.3}"),
+            Some(v) => v.pin_string(),
             None => "None".into(),
         };
         // Add labels for inputs: Add node uses A/B, Output node uses In
@@ -80,6 +85,7 @@ impl SnarlViewer<Node> for Viewer {
             }
             Node::Output => format!("In: {value_text}"),
             Node::Number(_) => value_text,
+            Node::Boundary(_) => value_text,
         };
         ui.label(text);
         PinInfo::circle().with_fill(egui::Color32::GREEN)
@@ -88,51 +94,54 @@ impl SnarlViewer<Node> for Viewer {
     fn outputs(&mut self, node: &Node) -> usize {
         match node {
             Node::Output => 0,
-            Node::Number(_) | Node::Add { .. } => 1,
+            Node::Number(_) | Node::Add { .. } | Node::Boundary(_) => 1,
         }
     }
 
-    fn has_body(&mut self, node: &Node) -> bool {
-        matches!(node, Node::Add { .. })
-    }
+    // fn has_body(&mut self, node: &Node) -> bool {
+    //     matches!(node, Node::Add { .. })
+    // }
 
-    fn show_body(
-        &mut self,
-        node: NodeId,
-        inputs: &[InPin],
-        _outputs: &[OutPin],
-        ui: &mut egui::Ui,
-        snarl: &mut Snarl<Node>,
-    ) {
-        let _ = ui; // body just computes; no extra UI needed
-        // First, compute values using an immutable borrow of snarl
-        let lhs = inputs
-            .get(0)
-            .and_then(|pin| pin.remotes.last())
-            .and_then(|r| Viewer::value_of_outpin(&*snarl, *r))
-            .unwrap_or(0.0);
-        let rhs = inputs
-            .get(1)
-            .and_then(|pin| pin.remotes.last())
-            .and_then(|r| Viewer::value_of_outpin(&*snarl, *r))
-            .unwrap_or(0.0);
-        // Then, update the node's cached sum with a mutable borrow
-        if let Node::Add { sum } = &mut snarl[node] {
-            *sum = lhs + rhs;
-        }
-    }
+    // fn show_body(
+    //     &mut self,
+    //     node: NodeId,
+    //     inputs: &[InPin],
+    //     _outputs: &[OutPin],
+    //     ui: &mut egui::Ui,
+    //     snarl: &mut Snarl<Node>,
+    // ) {
+    //     let _ = ui; // body just computes; no extra UI needed
+    //     // First, compute values using an immutable borrow of snarl
+    //     let lhs = inputs
+    //         .get(0)
+    //         .and_then(|pin| pin.remotes.last())
+    //         .and_then(|r| Viewer::value_of_outpin(&*snarl, *r))
+    //         .unwrap_or(0.0);
+    //     let rhs = inputs
+    //         .get(1)
+    //         .and_then(|pin| pin.remotes.last())
+    //         .and_then(|r| Viewer::value_of_outpin(&*snarl, *r))
+    //         .unwrap_or(0.0);
+    //     // Then, update the node's cached sum with a mutable borrow
+    //     if let Node::Add { sum } = &mut snarl[node] {
+    //         *sum = lhs + rhs;
+    //     }
+    // }
 
     fn show_output(&mut self, pin: &OutPin, ui: &mut egui::Ui, snarl: &mut Snarl<Node>) -> PinInfo {
         match snarl[pin.id.node] {
             Node::Number(ref mut v) => {
                 ui.add(egui::DragValue::new(v));
-                PinInfo::square().with_fill(egui::Color32::RED)
+                PinInfo::circle().with_fill(NodeType::Number(*v).pin_color())
             }
             Node::Add { sum } => {
                 ui.label(format!("Sum: {sum:.3}"));
-                PinInfo::square().with_fill(egui::Color32::RED)
+                PinInfo::circle().with_fill(NodeType::Number(sum).pin_color())
             }
             Node::Output => unreachable!("Output has no outputs"),
+            Node::Boundary(ref gs) => {
+                PinInfo::triangle().with_fill(NodeType::GasState(gs.clone()).pin_color())
+            }
         }
     }
 
@@ -166,6 +175,11 @@ impl SnarlViewer<Node> for Viewer {
         }
         if ui.button("Output").clicked() {
             snarl.insert_node(pos, Node::Output);
+            ui.close();
+        }
+        if ui.button("Boundary").clicked() {
+            snarl.insert_node(pos, Node::Boundary(
+                GasState::from_mass_rate(pTmx::default(), Time::new::<second>(1.0))));
             ui.close();
         }
     }

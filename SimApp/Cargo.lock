@@ -18,6 +18,7 @@ dependencies = [
  "eframe",
  "egui",
  "egui-snarl",
+ "uom",
 ]
 
 [[package]]
