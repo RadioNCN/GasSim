@@ -67,19 +67,23 @@ impl NatConst {
 }
 #[derive(Clone, Debug)]
 pub struct FitConst{}
-impl FitConst{
-    pub fn mu_25_H2()-> DynamicViscosity {
+/// 25C Viscosity Constants
+impl FitConst {
+    pub fn mu_25_H2() -> DynamicViscosity {
         DynamicViscosity::new::<pascal_second>(8.964e-6)
     }
-    pub fn mu_25_H2O()-> DynamicViscosity {
+    pub fn mu_25_H2O() -> DynamicViscosity {
         DynamicViscosity::new::<pascal_second>(1.026e-5)
     }
-    pub fn mu_25_O2()-> DynamicViscosity {
+    pub fn mu_25_O2() -> DynamicViscosity {
         DynamicViscosity::new::<pascal_second>(2.056e-5)
     }
-    pub fn mu_25_N2()-> DynamicViscosity {
+    pub fn mu_25_N2() -> DynamicViscosity {
         DynamicViscosity::new::<pascal_second>(1.800e-5)
     }
+}
+/// NIST Fit Constants
+impl FitConst{
     pub const fn fit_nist_H2()-> [f64; 8] {
         [33.066178, -11.363417, 11.432816, -2.772874, -0.158558, -9.980797, 172.707974, 0.0]
     }

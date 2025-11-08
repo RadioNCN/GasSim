@@ -1,19 +1,18 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 use std::f64::consts::PI;
 use std::ops::{Add, Sub};
-use uom::si::dynamic_viscosity::{micropascal_second, pascal_second};
+use uom::si::dynamic_viscosity::{pascal_second};
 use uom::si::kinematic_viscosity::square_meter_per_second;
-use uom::si::f64::{AmountOfSubstance, DynamicViscosity, HeatCapacity,
-                   KinematicViscosity, Length, Mass, MassDensity, MassRate,
-                   MolarHeatCapacity, MolarMass, Pressure, Ratio,
-                   SpecificHeatCapacity, ThermodynamicTemperature, Time,
-                   Velocity, Volume, VolumeRate};
+use uom::si::f64::*;
 use uom::si::mass_density::kilogram_per_cubic_meter;
 use uom::si::mass_rate::kilogram_per_second;
 use uom::si::molar_heat_capacity::joule_per_kelvin_mole;
 use uom::si::pressure::{bar};
 use uom::si::ratio::ratio;
 use uom::si::thermodynamic_temperature::{degree_celsius, kelvin};
-use crate::modules::Constants::{FitConst, NatConst};
+use crate::modules::constants::{FitConst, NatConst};
 
 #[derive(Clone, Debug)]
 pub struct pTmx {
@@ -60,36 +59,30 @@ pub struct GasState{
     pub N2: AmountOfSubstance,
 }
 impl GasState{
-    pub fn from_MassRate(
-        p: Pressure, T: ThermodynamicTemperature, m: MassRate, dt: Time,
-        xH2: Ratio, xH2O: Ratio, xO2: Ratio, xN2: Ratio,)
-        -> GasState{
-        let M: Mass = m*dt;
-        let H2: AmountOfSubstance = M * xH2 / NatConst::M_H2();
-        let H2O: AmountOfSubstance = M * xH2O / NatConst::M_H2O();
-        let O2: AmountOfSubstance = M * xO2 / NatConst::M_O2();
-        let N2: AmountOfSubstance = M * xN2 / NatConst::M_N2();
-        Self{p, T, H2, H2O, O2, N2, dt}
+    pub fn from_mass_rate(pTmx: pTmx, dt: Time) -> GasState{
+        let M: Mass = pTmx.m*dt;
+        let H2: AmountOfSubstance = M * pTmx.H2 / NatConst::M_H2();
+        let H2O: AmountOfSubstance = M * pTmx.H2O / NatConst::M_H2O();
+        let O2: AmountOfSubstance = M *pTmx.O2 / NatConst::M_O2();
+        let N2: AmountOfSubstance = M * pTmx.N2 / NatConst::M_N2();
+        Self{p:pTmx.p, T:pTmx.T, H2, H2O, O2, N2, dt}
     }
-    pub fn from_VolumeRate(
-        p: Pressure, T: ThermodynamicTemperature, v: VolumeRate, dt: Time,
-        yH2: Ratio, yH2O: Ratio, yO2: Ratio, yN2: Ratio,)
-        -> GasState{
-        let V: Volume = v*dt;
-        let H2: AmountOfSubstance = V*yH2/NatConst::V_H2();
-        let H2O: AmountOfSubstance = V*yH2O/NatConst::V_H2O();
-        let O2: AmountOfSubstance = V*yO2/NatConst::V_O2();
-        let N2: AmountOfSubstance = V*yN2/NatConst::V_N2();
-        Self{p, T, H2, H2O, O2, N2, dt}
+    pub fn from_volume_rate(pTvy: pTvy, dt: Time) -> GasState{
+        let V: Volume = pTvy.v*dt;
+        let H2: AmountOfSubstance = V*pTvy.H2/NatConst::V_H2();
+        let H2O: AmountOfSubstance = V*pTvy.H2O/NatConst::V_H2O();
+        let O2: AmountOfSubstance = V*pTvy.O2/NatConst::V_O2();
+        let N2: AmountOfSubstance = V*pTvy.N2/NatConst::V_N2();
+        Self{p:pTvy.p, T:pTvy.T, H2, H2O, O2, N2, dt}
     }
-    pub fn to_Mass(&self) -> pTmx {
+    pub fn to_mass_rate(&self) -> pTmx {
         let Mx = self.M_ges();
         pTmx{p: self.p, T: self.T, m: Mx.M/self.dt,
             H2: Mx.H2, H2O: Mx.H2O, O2: Mx.O2, N2: Mx.N2
         }
     }
 
-    pub fn to_Volume(&self) -> pTvy {
+    pub fn to_volume_rate(&self) -> pTvy {
         let Vy = self.V_ges();
         pTvy{p: self.p, T: self.T, v: Vy.V/self.dt,
             H2: Vy.H2, H2O: Vy.H2O, O2: Vy.O2, N2: Vy.N2
@@ -134,7 +127,7 @@ impl GasState{
     pub fn rH(&self) -> Ratio {
         let n = self.n_ges();
         let p_H2O: Pressure = self.H2O /n * self.p;
-        return p_H2O/self.p_sat();
+        p_H2O/self.p_sat()
     }
 
     pub fn TP(&self) -> ThermodynamicTemperature {
@@ -145,7 +138,7 @@ impl GasState{
         let DD = self.rH().value * SDD;
         let v = (DD / 6.1078).log(10f64);
         let TP = b * v / (a - v);
-        return ThermodynamicTemperature::new::<degree_celsius>(TP);
+        ThermodynamicTemperature::new::<degree_celsius>(TP)
     }
 
     /// Lennard-Jones-Potentials:
@@ -187,15 +180,14 @@ impl GasState{
             }
             mu += (y[i]*mu_part[i])/mu_j;
         }
-        return mu
+        mu
 
     }
 
     pub fn vis_kin(&self) -> KinematicViscosity{
         let mu = self.vis_dyn().get::<pascal_second>();
         let roh = self.roh().get::<kilogram_per_cubic_meter>();
-        let phi = KinematicViscosity::new::<square_meter_per_second>(mu /roh);
-        return phi;
+        KinematicViscosity::new::<square_meter_per_second>(mu /roh)
     }
 
     pub fn pH2(&self) -> Pressure{
@@ -213,28 +205,22 @@ impl GasState{
 
     /// d: Effective molekule diameter based on Leonard-Jones Potentials
     fn vis_dyn_part(&self, n: AmountOfSubstance, M: MolarMass, d: Length) -> DynamicViscosity {
-        let n_ges = self.n_ges();
         let m: Mass = n * M;
         let V: Volume = n * NatConst::R() * self.T / self.p;
         let roh: MassDensity = if V.value>0. {m/V}
         else{MassDensity::new::<kilogram_per_cubic_meter>(0.)};
         let v: Velocity = ((8.*NatConst::R()*self.T)/(PI*M)).sqrt(); //Mittlere Molekülgeschwindigkeit aus Maxwell-Bolzmann-Verteilung
-        let l: Length = (NatConst::kB()*self.T)/(2f64.sqrt() * PI * d*d * self.p); //Mittlere Freie Weglänge für ideale gase
+        let l: Length = (NatConst::kB()*self.T)/(2f64.sqrt() * PI * d*d * self.p); //Mittlere freie Weglänge für ideale Gase
         1./3. * roh * v * l
     }
 
     /// Fitting Polynom based on Canteras
     /// https://cantera.org/stable/cxx/d8/d58/classCantera_1_1GasTransport.html#a267d20cdea7486fe84e722ee82d84b20
     /// https://cantera.org/stable/python/transport.html#cantera.Transport.get_viscosity_polynomial
-
     fn vis_dyn_fit(&self, fit: [f64; 5]) -> DynamicViscosity {
         let T = self.T.value;
         let mut sum =0.;
-        let mut n=0;
-        for a in fit{
-            sum += a * T.ln().powi(n);
-            n+=1;
-        }
+        fit.iter().enumerate().for_each(|(n, a)|{sum += a * T.ln().powi(n as i32);});
         sum *= T.powf(0.25);
         let mu = sum*sum;
         DynamicViscosity::new::<pascal_second>(mu)
@@ -356,13 +342,13 @@ impl Add for GasState{
         };
         
         Self{
-            p: p,
+            p,
             T: ThermodynamicTemperature::new::<kelvin>(T),
-            dt: dt,
-            H2: H2,
-            H2O: H2O,
-            O2: O2,
-            N2: N2,
+            dt,
+            H2,
+            H2O,
+            O2,
+            N2,
         }
     }
 }
@@ -414,13 +400,13 @@ impl Sub for GasState{
         };
 
         Self{
-            p: p,
+            p,
             T: self.T,
-            dt: dt,
-            H2: H2,
-            H2O: H2O,
-            O2: O2,
-            N2: N2,
+            dt,
+            H2,
+            H2O,
+            O2,
+            N2,
         }
     }
 }
