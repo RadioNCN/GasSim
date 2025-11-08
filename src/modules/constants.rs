@@ -2,8 +2,9 @@
 
 use uom::si::dynamic_viscosity::pascal_second;
 use uom::si::electric_charge::coulomb;
-use uom::si::f64::{DynamicViscosity, ElectricCharge, HeatCapacity, MolarHeatCapacity, MolarMass, MolarVolume, ThermodynamicTemperature};
+use uom::si::f64::*;
 use uom::si::heat_capacity::joule_per_kelvin;
+use uom::si::length::angstrom;
 use uom::si::molar_heat_capacity::joule_per_kelvin_mole;
 use uom::si::molar_mass::gram_per_mole;
 use uom::si::molar_volume::cubic_decimeter_per_mole;
@@ -96,4 +97,19 @@ impl FitConst{
     pub const fn fit_nist_H2O()-> [f64; 8] {
         [30.09200, 6.832514, 6.793435, -2.534480, 0.082139, -250.8810, 223.3967, -241.8264]
     }
+}
+/// Effective Molecule Diameters
+impl FitConst{
+    pub fn sigma_H2() -> Length {
+        Length::new::< angstrom > (2.93 / 1.3158665329244235)
+    } // 1/1.3158665329244235
+    pub fn sigma_H2O() -> Length {
+        Length::new::< angstrom > (2.641 / 0.6971553487521269)
+    } // 1/0.6971553487521269
+    pub fn sigma_O2() -> Length {
+        Length::new::<angstrom>(3.467 / 1.122136879560862)
+    } // 1//1.122136879560862
+    pub fn sigma_N2() -> Length {
+        Length::new::< angstrom > (3.7 / 1.1585688927269846)
+    } // 1/1.1585688927269846
 }
