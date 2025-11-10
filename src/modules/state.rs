@@ -67,6 +67,16 @@ impl GasState{
         let N2: AmountOfSubstance = M * pTmx.N2 / NatConst::M_N2();
         Self{p:pTmx.p, T:pTmx.T, H2, H2O, O2, N2, dt}
     }
+    pub fn update_mass_rate(&mut self, pTmx: pTmx, dt: Time){
+        let M: Mass = pTmx.m*dt;
+        self.p = pTmx.p;
+        self.T = pTmx.T;
+        self.H2 = M * pTmx.H2 / NatConst::M_H2();
+        self.H2O = M * pTmx.H2O / NatConst::M_H2O();
+        self.O2 = M *pTmx.O2 / NatConst::M_O2();
+        self.N2 = M * pTmx.N2 / NatConst::M_N2();
+    }
+    
     pub fn from_volume_rate(pTvy: pTvy, dt: Time) -> GasState{
         let V: Volume = pTvy.v*dt;
         let H2: AmountOfSubstance = V*pTvy.H2/NatConst::V_H2();
