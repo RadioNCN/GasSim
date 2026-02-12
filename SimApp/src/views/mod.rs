@@ -1,1 +1,1 @@
-pub(crate) mod Viewer;
+pub mod Viewer;

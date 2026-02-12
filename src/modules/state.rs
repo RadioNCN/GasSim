@@ -7,11 +7,12 @@ use uom::si::dynamic_viscosity::{pascal_second};
 use uom::si::kinematic_viscosity::square_meter_per_second;
 use uom::si::f64::*;
 use uom::si::mass_density::kilogram_per_cubic_meter;
-use uom::si::mass_rate::kilogram_per_second;
+use uom::si::mass_rate::{gram_per_second, kilogram_per_second};
 use uom::si::molar_heat_capacity::joule_per_kelvin_mole;
 use uom::si::pressure::{bar};
 use uom::si::ratio::ratio;
 use uom::si::thermodynamic_temperature::{degree_celsius, kelvin};
+use uom::si::time::second;
 use crate::modules::constants::{FitConst, NatConst};
 
 #[derive(Clone, Debug)]
@@ -30,11 +31,11 @@ impl Default for pTmx {
         Self {
             p: Pressure::new::<bar>(1.0),
             T: ThermodynamicTemperature::new::<kelvin>(333.15),
-            m: MassRate::new::<kilogram_per_second>(0.0),
+            m: MassRate::new::<kilogram_per_second>(0.001),
             H2: Ratio::new::<ratio>(0.0),
             H2O: Ratio::new::<ratio>(0.0),
-            O2: Ratio::new::<ratio>(0.0),
-            N2: Ratio::new::<ratio>(0.0),
+            O2: Ratio::new::<ratio>(0.21),
+            N2: Ratio::new::<ratio>(0.79),
         }
     }
 }
@@ -68,21 +69,23 @@ impl GasState{
         Self{p:pTmx.p, T:pTmx.T, H2, H2O, O2, N2, dt}
     }
     pub fn update_mass_rate(&mut self, pTmx: pTmx, dt: Time){
-        let M: Mass = pTmx.m*dt;
-        self.p = pTmx.p;
-        self.T = pTmx.T;
-        self.H2 = M * pTmx.H2 / NatConst::M_H2();
-        self.H2O = M * pTmx.H2O / NatConst::M_H2O();
-        self.O2 = M *pTmx.O2 / NatConst::M_O2();
-        self.N2 = M * pTmx.N2 / NatConst::M_N2();
+        if pTmx.m.is_normal() {
+            let M: Mass = pTmx.m * dt;
+            self.p = pTmx.p;
+            self.T = pTmx.T;
+            self.H2 = M * pTmx.H2 / NatConst::M_H2();
+            self.H2O = M * pTmx.H2O / NatConst::M_H2O();
+            self.O2 = M * pTmx.O2 / NatConst::M_O2();
+            self.N2 = M * pTmx.N2 / NatConst::M_N2();
+        }
     }
-    
+
     pub fn from_volume_rate(pTvy: pTvy, dt: Time) -> GasState{
         let V: Volume = pTvy.v*dt;
-        let H2: AmountOfSubstance = V*pTvy.H2/NatConst::V_H2();
-        let H2O: AmountOfSubstance = V*pTvy.H2O/NatConst::V_H2O();
-        let O2: AmountOfSubstance = V*pTvy.O2/NatConst::V_O2();
-        let N2: AmountOfSubstance = V*pTvy.N2/NatConst::V_N2();
+        let H2: AmountOfSubstance = V*pTvy.H2/(NatConst::R() * pTvy.T / pTvy.p);
+        let H2O: AmountOfSubstance = V*pTvy.H2O/(NatConst::R() * pTvy.T / pTvy.p);
+        let O2: AmountOfSubstance = V*pTvy.O2/(NatConst::R() * pTvy.T / pTvy.p);
+        let N2: AmountOfSubstance = V*pTvy.N2/(NatConst::R() * pTvy.T / pTvy.p);
         Self{p:pTvy.p, T:pTvy.T, H2, H2O, O2, N2, dt}
     }
     pub fn to_mass_rate(&self) -> pTmx {
@@ -420,18 +423,17 @@ impl Sub for GasState{
         }
     }
 }
-
-impl Default for GasState{
-    fn default() -> Self {
-        Self{
+impl GasState{
+    pub fn Air() ->Self{
+        GasState::from_mass_rate(pTmx{
             p: Pressure::new::<bar>(1.),
-            T: ThermodynamicTemperature::new::<kelvin>(298.15),
-            dt: Default::default(),
-            H2: Default::default(),
-            H2O: Default::default(),
-            O2: Default::default(),
-            N2: Default::default(),
-        }
+            T: ThermodynamicTemperature::new::<degree_celsius>(25.),
+            m: MassRate::new::<gram_per_second>(1.),
+            H2: Ratio::new::<ratio>(0.),
+            H2O: Ratio::new::<ratio>(0.),
+            O2: Ratio::new::<ratio>(0.23),
+            N2: Ratio::new::<ratio>(0.77),
+        }, Time::new::<second>(1.))
     }
 }
 
