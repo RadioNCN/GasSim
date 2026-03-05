@@ -1,13 +1,10 @@
 mod nodes;
 mod views;
+use crate::nodes::Node;
 use eframe::{App, Frame};
 use egui::Context;
-use egui_snarl::{InPin, OutPin, Snarl};
-use egui_snarl::ui::{PinInfo, SnarlViewer, SnarlWidget, SnarlStyle, PinPlacement};
-use egui_snarl::{InPinId, NodeId, OutPinId};
-use GasSim::modules::state::GasState;
-use nodes::GasNodes::GasNode;
-use crate::nodes::Node;
+use egui_snarl::ui::{PinPlacement, SnarlStyle, SnarlViewer, SnarlWidget};
+use egui_snarl::Snarl;
 
 fn main() {
     let native_options = eframe::NativeOptions::default();
@@ -16,7 +13,7 @@ fn main() {
         native_options,
         Box::new(|cc| Ok(Box::new(AppSim::new(cc)))),
     )
-        .unwrap();
+    .unwrap();
 }
 
 struct AppSim {
@@ -27,7 +24,10 @@ impl App for AppSim {
         egui::CentralPanel::default().show(ctx, |ui| {
             SnarlWidget::new()
                 .id(egui::Id::new("snarl-min"))
-                .style(SnarlStyle { pin_placement: Some(PinPlacement::Edge), ..Default::default() })
+                .style(SnarlStyle {
+                    pin_placement: Some(PinPlacement::Edge),
+                    ..Default::default()
+                })
                 .show(&mut self.snarl, &mut views::Viewer::Viewer, ui);
         });
     }

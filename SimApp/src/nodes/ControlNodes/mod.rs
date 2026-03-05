@@ -1,10 +1,8 @@
-use egui::Ui;
-use egui_snarl::{InPin, NodeId, OutPin, Snarl};
-use egui_snarl::ui::PinInfo;
-use GasSim::modules::PID::{PID_para, PID};
-use GasSim::modules::state::GasState;
 use crate::nodes::{Node, NodeViewer};
-use crate::nodes::GasNodes::GasNode;
+use egui::Ui;
+use egui_snarl::ui::PinInfo;
+use egui_snarl::{InPin, NodeId, OutPin, Snarl};
+use GasSim::modules::PID::{PID_para, PID};
 
 pub mod PID_node;
 
@@ -33,11 +31,14 @@ impl NodeViewer for ControlNode {
     }
     fn show_input(&self, pin: &InPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo {
         match &snarl[pin.id.node] {
-            Node::Control(ControlNode::PID(_)) => {
-                PinInfo::circle().with_fill(egui::Color32::WHITE) },
-            Node::Control(ControlNode::Num_input(_)) => PinInfo::circle().with_fill(egui::Color32::WHITE),
-            Node::Control(ControlNode::Num_output(_)) => PinInfo::circle().with_fill(egui::Color32::WHITE),
-            _ => PinInfo::circle().with_fill(egui::Color32::RED)
+            Node::Control(ControlNode::PID(_)) => PinInfo::circle().with_fill(egui::Color32::WHITE),
+            Node::Control(ControlNode::Num_input(_)) => {
+                PinInfo::circle().with_fill(egui::Color32::WHITE)
+            }
+            Node::Control(ControlNode::Num_output(_)) => {
+                PinInfo::circle().with_fill(egui::Color32::WHITE)
+            }
+            _ => PinInfo::circle().with_fill(egui::Color32::RED),
         }
     }
     fn outputs(&self) -> usize {
@@ -50,7 +51,7 @@ impl NodeViewer for ControlNode {
     fn show_output(&self, pin: &OutPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo {
         match &self {
             ControlNode::PID(_) => PinInfo::circle().with_fill(egui::Color32::WHITE),
-            ControlNode::Num_input(_) => { PinInfo::circle().with_fill(egui::Color32::WHITE) },
+            ControlNode::Num_input(_) => PinInfo::circle().with_fill(egui::Color32::WHITE),
             ControlNode::Num_output(n) => PinInfo::circle().with_fill(egui::Color32::WHITE),
         }
     }
@@ -67,14 +68,18 @@ impl NodeViewer for ControlNode {
                 ui.label("Kd");
                 ui.add(egui::DragValue::new(&mut pid.kd).speed(0.01));
             }
-            ControlNode::Num_input(n) => {ui.add(egui::DragValue::new(n).speed(0.1));},
-            ControlNode::Num_output(n) => {ui.add(egui::DragValue::new(n).speed(0.1));},
+            ControlNode::Num_input(n) => {
+                ui.add(egui::DragValue::new(n).speed(0.1));
+            }
+            ControlNode::Num_output(n) => {
+                ui.add(egui::DragValue::new(n).speed(0.1));
+            }
             _ => {}
         }
     }
     fn connect(&mut self, from: &OutPin, to: &InPin, snarl: &mut Snarl<Node>) {
-        let from_ok = matches!(snarl[from.id.node],  Node::Control(_));
-        let to_ok = matches!(snarl[to.id.node],  Node::Control(_));
+        let from_ok = matches!(snarl[from.id.node], Node::Control(_));
+        let to_ok = matches!(snarl[to.id.node], Node::Control(_));
         if !(from_ok && to_ok) {
             return;
         }
@@ -91,7 +96,16 @@ impl NodeViewer for ControlNode {
         ui.label("Add Node");
 
         if ui.button("PID").clicked() {
-            let pid_para =PID_para{P:1., I:1., D:1., dt:0.01, init_I:0., offset:0., dI:(-1.,1.), dE:(-1.,1.)};
+            let pid_para = PID_para {
+                P: 1.,
+                I: 1.,
+                D: 1.,
+                dt: 0.01,
+                init_I: 0.,
+                offset: 0.,
+                dI: (-1., 1.),
+                dE: (-1., 1.),
+            };
             let pid = PID::new(pid_para);
             snarl.insert_node(pos, Node::Control(ControlNode::PID(pid)));
             ui.close();
@@ -111,12 +125,17 @@ impl NodeViewer for ControlNode {
         true
     }
 
-    fn show_node_menu(&mut self, node: NodeId, inputs: &[InPin], outputs: &[OutPin], ui: &mut egui::Ui, snarl: &mut Snarl<Node>,
+    fn show_node_menu(
+        &mut self,
+        node: NodeId,
+        inputs: &[InPin],
+        outputs: &[OutPin],
+        ui: &mut egui::Ui,
+        snarl: &mut Snarl<Node>,
     ) {
         if ui.button("Remove").clicked() {
             snarl.remove_node(node);
             ui.close();
         }
     }
-
 }

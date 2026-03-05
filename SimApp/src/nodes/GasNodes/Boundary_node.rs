@@ -1,21 +1,10 @@
-use egui::Ui;
-use egui_snarl::{InPin, NodeId, OutPin, OutPinId, Snarl};
-use egui_snarl::ui::PinInfo;
-use uom::si::f64::{MassRate, Pressure, Ratio, ThermodynamicTemperature, Time};
-use uom::si::mass_rate::gram_per_second;
-use uom::si::pressure::{bar, pascal};
-use uom::si::ratio::ratio;
-use uom::si::thermodynamic_temperature::degree_celsius;
-use uom::si::time::second;
-use GasSim::modules::state::GasState;
 use crate::nodes::GasNodes::GasNode;
 use crate::nodes::Node;
-
-
-
+use egui_snarl::{OutPinId, Snarl};
+use GasSim::modules::state::GasState;
 
 pub enum BoundaryType {
-    Boundary(GasState)
+    Boundary(GasState),
 }
 
 impl BoundaryType {
@@ -31,18 +20,18 @@ impl BoundaryType {
     }
     pub fn pin_color(&self) -> egui::Color32 {
         match self {
-            BoundaryType::Boundary(_) => egui::Color32::BLUE
+            BoundaryType::Boundary(_) => egui::Color32::BLUE,
         }
     }
     pub fn value_of_outpin(snarl: &Snarl<Node>, out_pin: OutPinId) -> Option<GasState> {
         match &snarl[out_pin.node] {
             Node::Gas(GasNode::Boundary(GS, _)) => Some(GS.clone()),
-            _ => None
+            _ => None,
         }
     }
     pub fn value(&self) -> GasState {
         match self {
-            BoundaryType::Boundary(GS) => GS.clone()
+            BoundaryType::Boundary(GS) => GS.clone(),
         }
     }
 }

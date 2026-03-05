@@ -1,23 +1,22 @@
-use egui::Ui;
-use egui_snarl::{InPin, NodeId, OutPin, Snarl};
-use egui_snarl::ui::{PinInfo, SnarlViewer};
-use GasSim::modules::PID::{PID_para, PID};
-use GasSim::modules::state::GasState;
+use crate::nodes::ControlNodes::ControlNode;
 use crate::nodes::GasNodes::GasNode;
 use crate::nodes::{Node, NodeViewer};
-use crate::nodes::ControlNodes::ControlNode;
+use egui::Ui;
+use egui_snarl::ui::{PinInfo, SnarlViewer};
+use egui_snarl::{InPin, NodeId, OutPin, Snarl};
+use GasSim::modules::state::GasState;
+use GasSim::modules::PID::{PID_para, PID};
 
 pub struct Viewer;
 
-impl Viewer {
-}
+impl Viewer {}
 
 impl SnarlViewer<Node> for Viewer {
     fn title(&mut self, node: &Node) -> String {
         match node {
             Node::Gas(n) => n.title(),
             Node::Control(n) => n.title(),
-            _ => "".to_string()
+            _ => "".to_string(),
         }
     }
 
@@ -25,7 +24,7 @@ impl SnarlViewer<Node> for Viewer {
         match node {
             Node::Gas(n) => n.inputs(),
             Node::Control(n) => n.inputs(),
-            _ => 0
+            _ => 0,
         }
     }
 
@@ -33,7 +32,7 @@ impl SnarlViewer<Node> for Viewer {
         match &snarl[pin.id.node] {
             Node::Gas(n) => n.show_input(pin, ui, snarl),
             Node::Control(n) => n.show_input(pin, ui, snarl),
-            _ => PinInfo::circle().with_fill(egui::Color32::RED)
+            _ => PinInfo::circle().with_fill(egui::Color32::RED),
         }
     }
 
@@ -41,7 +40,7 @@ impl SnarlViewer<Node> for Viewer {
         match node {
             Node::Gas(n) => n.outputs(),
             Node::Control(n) => n.outputs(),
-            _ => 0
+            _ => 0,
         }
     }
 
@@ -49,7 +48,7 @@ impl SnarlViewer<Node> for Viewer {
         match &snarl[pin.id.node] {
             Node::Gas(n) => n.show_output(pin, ui, snarl),
             Node::Control(n) => n.show_output(pin, ui, snarl),
-            _ => PinInfo::circle().with_fill(egui::Color32::RED)
+            _ => PinInfo::circle().with_fill(egui::Color32::RED),
         }
     }
 
@@ -57,15 +56,22 @@ impl SnarlViewer<Node> for Viewer {
         true
     }
 
-    fn show_body(&mut self, node: NodeId, inputs: &[InPin], outputs: &[OutPin], ui: &mut Ui, snarl: &mut Snarl<Node>) {
+    fn show_body(
+        &mut self,
+        node: NodeId,
+        inputs: &[InPin],
+        outputs: &[OutPin],
+        ui: &mut Ui,
+        snarl: &mut Snarl<Node>,
+    ) {
         match snarl[node] {
             Node::Gas(ref mut n) => {
                 n.show_body(node, inputs, outputs, ui);
-            },
+            }
             Node::Control(ref mut n) => {
                 n.show_body(node, inputs, outputs, ui);
             }
-            _=> println!("Error: Has no body")
+            _ => println!("Error: Has no body"),
         }
     }
 
@@ -98,12 +104,20 @@ impl SnarlViewer<Node> for Viewer {
         ui.label("Add Node");
 
         if ui.button("Bounday").clicked() {
-            snarl.insert_node(pos, Node::Gas(GasNode::Boundary(
-                GasState::Air(),1)));
+            snarl.insert_node(pos, Node::Gas(GasNode::Boundary(GasState::Air(), 1)));
             ui.close();
         }
         if ui.button("PID").clicked() {
-            let pid_para =PID_para{P:1., I:1., D:1., dt:0.01, init_I:0., offset:0., dI:(-1.,1.), dE:(-1.,1.)};
+            let pid_para = PID_para {
+                P: 1.,
+                I: 1.,
+                D: 1.,
+                dt: 0.01,
+                init_I: 0.,
+                offset: 0.,
+                dI: (-1., 1.),
+                dE: (-1., 1.),
+            };
             let pid = PID::new(pid_para);
             snarl.insert_node(pos, Node::Control(ControlNode::PID(pid)));
             ui.close();
@@ -136,5 +150,4 @@ impl SnarlViewer<Node> for Viewer {
             ui.close();
         }
     }
-
 }

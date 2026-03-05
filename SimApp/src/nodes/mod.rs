@@ -1,12 +1,11 @@
-pub mod GasNodes;
 pub mod ControlNodes;
+pub mod GasNodes;
 
-use egui::Ui;
-use egui_snarl::{InPin, NodeId, OutPin, Snarl};
-use egui_snarl::ui::PinInfo;
-use GasSim::modules::state::GasState;
-use GasNodes::GasNode;
 use crate::nodes::ControlNodes::ControlNode;
+use egui::Ui;
+use egui_snarl::ui::PinInfo;
+use egui_snarl::{InPin, NodeId, OutPin, Snarl};
+use GasNodes::GasNode;
 
 #[derive(Clone, Debug)]
 pub enum Node {
@@ -26,5 +25,12 @@ pub trait NodeViewer {
     fn has_graph_menu(&mut self, _pos: egui::Pos2, _snarl: &mut Snarl<Node>) -> bool;
     fn show_graph_menu(&mut self, pos: egui::Pos2, ui: &mut egui::Ui, snarl: &mut Snarl<Node>);
     fn has_node_menu(&mut self, _node: &Node) -> bool;
-    fn show_node_menu(&mut self, node: NodeId, inputs: &[InPin], outputs: &[OutPin], ui: &mut egui::Ui, snarl: &mut Snarl<Node>, );
+    fn show_node_menu(
+        &mut self,
+        node: NodeId,
+        inputs: &[InPin],
+        outputs: &[OutPin],
+        ui: &mut egui::Ui,
+        snarl: &mut Snarl<Node>,
+    );
 }

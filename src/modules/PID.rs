@@ -5,8 +5,23 @@ use std::ops::{Add, Div, Mul, Sub};
 #[derive(Debug, Copy, Clone)]
 pub struct PID<I, O, Y>
 where
-    I: Copy + Clone + std::fmt::Debug + Add<Output = I> + Sub<Output = I> + Div<Output = Y> + Div<f64, Output = I>,
-    O: Copy + Clone + std::fmt::Debug + Add<Output = O> + Sub<Output = O> + Mul<f64, Output = O> + Div<f64, Output = O> + Div<Output = Y> + PartialOrd + Zero,
+    I: Copy
+        + Clone
+        + std::fmt::Debug
+        + Add<Output = I>
+        + Sub<Output = I>
+        + Div<Output = Y>
+        + Div<f64, Output = I>,
+    O: Copy
+        + Clone
+        + std::fmt::Debug
+        + Add<Output = O>
+        + Sub<Output = O>
+        + Mul<f64, Output = O>
+        + Div<f64, Output = O>
+        + Div<Output = Y>
+        + PartialOrd
+        + Zero,
     Y: Copy + Mul<O, Output = O>,
 {
     pub kp: f64,
@@ -25,8 +40,23 @@ where
 
 impl<I, O, Y> PID<I, O, Y>
 where
-    I: Copy + Clone + std::fmt::Debug + Add<Output = I> + Sub<Output = I> + Div<Output = Y> + Div<f64, Output = I>,
-    O: Copy + Clone + std::fmt::Debug + Add<Output = O> + Sub<Output = O> + Mul<f64, Output = O> + Div<f64, Output = O> + Div<Output = Y> + PartialOrd + Zero,
+    I: Copy
+        + Clone
+        + std::fmt::Debug
+        + Add<Output = I>
+        + Sub<Output = I>
+        + Div<Output = Y>
+        + Div<f64, Output = I>,
+    O: Copy
+        + Clone
+        + std::fmt::Debug
+        + Add<Output = O>
+        + Sub<Output = O>
+        + Mul<f64, Output = O>
+        + Div<f64, Output = O>
+        + Div<Output = Y>
+        + PartialOrd
+        + Zero,
     Y: Copy + Mul<O, Output = O>,
 {
     pub fn new(para: PID_para<I, O>) -> Self {
@@ -60,9 +90,7 @@ where
             self.Der = (err - self.err_old) * self.kd * self.dt;
             let s = self.Pro + self.Int + self.Der;
 
-            let outr = norm_FN(
-                &s, &self.dE.0, &self.dE.1,
-                &input.min, &input.max);
+            let outr = norm_FN(&s, &self.dE.0, &self.dE.1, &input.min, &input.max);
             let lower = input.min + self.offset;
             let upper = input.max - self.offset;
             let clamped = if outr < lower {
@@ -74,10 +102,7 @@ where
             };
             out = clamped + self.offset;
         } else {
-            let outr = norm_FN(
-                &out, &self.dE.0, &self.dE.1,
-                &input.min, &input.max,
-            );
+            let outr = norm_FN(&out, &self.dE.0, &self.dE.1, &input.min, &input.max);
             self.err_int = (outr - self.Pro - self.Der) / (self.ki * self.dt);
         }
 
