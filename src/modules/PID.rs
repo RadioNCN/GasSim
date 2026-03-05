@@ -3,39 +3,41 @@ use num_traits::Zero;
 use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, Copy, Clone)]
-pub struct PID<T, Y>
+pub struct PID<I, O, Y>
 where
-    T: Copy + Clone + std::fmt::Debug + Add<Output = T> + Sub<Output = T> + Mul<f64, Output = T> + Div<f64, Output = T> + Div<Output = Y> + PartialOrd + Zero,
-    Y: Copy + Mul<T, Output = T>,
+    I: Copy + Clone + std::fmt::Debug + Add<Output = I> + Sub<Output = I> + Div<Output = Y> + Div<f64, Output = I>,
+    O: Copy + Clone + std::fmt::Debug + Add<Output = O> + Sub<Output = O> + Mul<f64, Output = O> + Div<f64, Output = O> + Div<Output = Y> + PartialOrd + Zero,
+    Y: Copy + Mul<O, Output = O>,
 {
     P: f64,
     I: f64,
     D: f64,
-    pub Pro: T,
-    pub Int: T,
-    pub Der: T,
-    err_old: T,
-    err_int: T,
-    offset: T,
+    pub Pro: O,
+    pub Int: O,
+    pub Der: O,
+    err_old: O,
+    err_int: O,
+    offset: O,
     pub dt: f64,
-    dI: (T, T),
-    dE: (T, T),
+    dI: (I, I),
+    dE: (O, O),
 }
 
-impl<T, Y> PID<T, Y>
+impl<I, O, Y> PID<I, O, Y>
 where
-    T: Copy + Clone + std::fmt::Debug + Add<Output = T> + Sub<Output = T> + Mul<f64, Output = T> + Div<f64, Output = T> + Div<Output = Y> + PartialOrd + Zero,
-    Y: Copy + Mul<T, Output = T>,
+    I: Copy + Clone + std::fmt::Debug + Add<Output = I> + Sub<Output = I> + Div<Output = Y> + Div<f64, Output = I>,
+    O: Copy + Clone + std::fmt::Debug + Add<Output = O> + Sub<Output = O> + Mul<f64, Output = O> + Div<f64, Output = O> + Div<Output = Y> + PartialOrd + Zero,
+    Y: Copy + Mul<O, Output = O>,
 {
-    pub fn new(para: PID_para<T>) -> Self {
+    pub fn new(para: PID_para<I, O>) -> Self {
         Self {
             P: para.P,
             I: para.I,
             D: para.D,
-            err_old: T::zero(),
+            err_old: O::zero(),
             err_int: para.init_I,
-            Pro: T::zero(),
-            Der: T::zero(),
+            Pro: O::zero(),
+            Der: O::zero(),
             Int: para.init_I * para.I * para.dt,
             offset: para.offset,
             dt: para.dt,
@@ -44,7 +46,7 @@ where
         }
     }
 
-    pub fn call(&mut self, input: PID_input<T>, reset: bool, reset_out: T) -> T {
+    pub fn call(&mut self, input: PID_input<I, O>, reset: bool, reset_out: O) -> O {
         let set = norm_FN(&input.set, &self.dI.0, &self.dI.1, &self.dE.0, &self.dE.1);
         let act = norm_FN(&input.act, &self.dI.0, &self.dI.1, &self.dE.0, &self.dE.1);
         let err = set - act;
@@ -89,21 +91,21 @@ where
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct PID_input<T> {
-    pub set: T,
-    pub act: T,
-    pub min: T,
-    pub max: T,
+pub struct PID_input<I, O> {
+    pub set: I,
+    pub act: I,
+    pub min: O,
+    pub max: O,
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct PID_para<T> {
+pub struct PID_para<I, O> {
     pub P: f64,
     pub I: f64,
     pub D: f64,
     pub dt: f64,
-    pub init_I: T,
-    pub offset: T,
-    pub dI: (T, T),
-    pub dE: (T, T),
+    pub init_I: O,
+    pub offset: O,
+    pub dI: (I, I),
+    pub dE: (O, O),
 }
