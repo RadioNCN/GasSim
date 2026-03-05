@@ -9,9 +9,9 @@ where
     O: Copy + Clone + std::fmt::Debug + Add<Output = O> + Sub<Output = O> + Mul<f64, Output = O> + Div<f64, Output = O> + Div<Output = Y> + PartialOrd + Zero,
     Y: Copy + Mul<O, Output = O>,
 {
-    P: f64,
-    I: f64,
-    D: f64,
+    pub kp: f64,
+    pub ki: f64,
+    pub kd: f64,
     pub Pro: O,
     pub Int: O,
     pub Der: O,
@@ -31,9 +31,9 @@ where
 {
     pub fn new(para: PID_para<I, O>) -> Self {
         Self {
-            P: para.P,
-            I: para.I,
-            D: para.D,
+            kp: para.P,
+            ki: para.I,
+            kd: para.D,
             err_old: O::zero(),
             err_int: para.init_I,
             Pro: O::zero(),
@@ -55,9 +55,9 @@ where
 
         if reset == false {
             self.err_int = self.err_int + err;
-            self.Pro = err * self.P;
-            self.Int = self.err_int * self.I * self.dt;
-            self.Der = (err - self.err_old) * self.D * self.dt;
+            self.Pro = err * self.kp;
+            self.Int = self.err_int * self.ki * self.dt;
+            self.Der = (err - self.err_old) * self.kd * self.dt;
             let s = self.Pro + self.Int + self.Der;
 
             let outr = norm_FN(
@@ -78,7 +78,7 @@ where
                 &out, &self.dE.0, &self.dE.1,
                 &input.min, &input.max,
             );
-            self.err_int = (outr - self.Pro - self.Der) / (self.I * self.dt);
+            self.err_int = (outr - self.Pro - self.Der) / (self.ki * self.dt);
         }
 
         if out <= input.min || out >= input.max {
