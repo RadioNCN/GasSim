@@ -138,8 +138,8 @@ impl NodeViewer for ControlNode {
                 ui.add(egui::DragValue::new(&mut input.min).speed(0.01));
                 ui.label("max");
                 ui.add(egui::DragValue::new(&mut input.max).speed(0.01));
-                let outp = pid.call(&input, false, 0.);
-                *out = outp;
+                // ui.label(format!("Output: {:.3}", out));
+                // Calculation is done in simulation thread, not here
             }
             ControlNode::Num_input(inp) => {
                 ui.add(egui::DragValue::new(inp).speed(0.001));
@@ -150,8 +150,9 @@ impl NodeViewer for ControlNode {
             ControlNode::PT1(pt1, inp, out) => {
                 ui.label("T");
                 ui.add(egui::DragValue::new(&mut pt1.t).speed(0.01));
-                let outp = pt1.call(inp.clone());
-                *out = outp;
+                // ui.label(format!("Input: {:.3}", inp));
+                // ui.label(format!("Output: {:.3}", out));
+                // Calculation is done in simulation thread, not here
             }
             _ => {}
         }

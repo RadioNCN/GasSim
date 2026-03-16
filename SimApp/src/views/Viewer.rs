@@ -113,10 +113,10 @@ impl SnarlViewer<Node> for Viewer {
         }
         if ui.button("PID").clicked() {
             let pid_para = PID_para {
-                P: 1.,
+                P: 0.1,
                 I: 1.,
-                D: 1.,
-                dt: 0.01,
+                D: -100.,
+                dt: 0.001,
                 init_I: 0.,
                 offset: 0.,
                 dI: (-1., 1.),
@@ -137,7 +137,7 @@ impl SnarlViewer<Node> for Viewer {
             ui.close();
         }
         if ui.button("PT1").clicked() {
-            snarl.insert_node(pos, Node::Control(ControlNode::PT1(pt1::new(1., 1.),0.,0.)));
+            snarl.insert_node(pos, Node::Control(ControlNode::PT1(pt1::new(1000., 1.),0.,0.)));
             ui.close();
         }
     }
