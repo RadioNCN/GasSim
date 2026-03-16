@@ -17,8 +17,8 @@ pub trait NodeViewer {
     fn title(&self) -> String;
     fn inputs(&self) -> usize;
     fn outputs(&self) -> usize;
-    fn show_input(&self, pin: &InPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo;
-    fn show_output(&self, pin: &OutPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo;
+    fn show_input(&mut self, pin: &InPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo;
+    fn show_output(&mut self, pin: &OutPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo;
     fn has_body(&mut self, node: &Node) -> bool;
     fn show_body(&mut self, node: NodeId, inputs: &[InPin], outputs: &[OutPin], ui: &mut Ui);
     fn connect(&mut self, from: &OutPin, to: &InPin, snarl: &mut Snarl<Node>);

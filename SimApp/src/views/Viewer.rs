@@ -5,7 +5,8 @@ use egui::Ui;
 use egui_snarl::ui::{PinInfo, SnarlViewer};
 use egui_snarl::{InPin, NodeId, OutPin, Snarl};
 use GasSim::modules::state::GasState;
-use GasSim::modules::PID::{PID_para, PID};
+use GasSim::modules::PID::{PID_input, PID_para, PID};
+use GasSim::modules::PT1::pt1;
 
 pub struct Viewer;
 
@@ -29,9 +30,11 @@ impl SnarlViewer<Node> for Viewer {
     }
 
     fn show_input(&mut self, pin: &InPin, ui: &mut Ui, snarl: &mut Snarl<Node>) -> PinInfo {
-        match &snarl[pin.id.node] {
-            Node::Gas(n) => n.show_input(pin, ui, snarl),
-            Node::Control(n) => n.show_input(pin, ui, snarl),
+        let snarl_clone = snarl.clone();
+        match &mut snarl[pin.id.node] {
+            Node::Gas(n) => {
+                n.show_input(pin, ui, &snarl_clone) },
+            Node::Control(n) => n.show_input(pin, ui, &snarl_clone),
             _ => PinInfo::circle().with_fill(egui::Color32::RED),
         }
     }
@@ -45,9 +48,10 @@ impl SnarlViewer<Node> for Viewer {
     }
 
     fn show_output(&mut self, pin: &OutPin, ui: &mut Ui, snarl: &mut Snarl<Node>) -> PinInfo {
-        match &snarl[pin.id.node] {
-            Node::Gas(n) => n.show_output(pin, ui, snarl),
-            Node::Control(n) => n.show_output(pin, ui, snarl),
+        let snarl_clone = snarl.clone();
+        match &mut snarl[pin.id.node] {
+            Node::Gas(n) => n.show_output(pin, ui, &snarl_clone),
+            Node::Control(n) => n.show_output(pin, ui, &snarl_clone),
             _ => PinInfo::circle().with_fill(egui::Color32::RED),
         }
     }
@@ -118,17 +122,22 @@ impl SnarlViewer<Node> for Viewer {
                 dI: (-1., 1.),
                 dE: (-1., 1.),
             };
+            let pid_in= PID_input{set: 0., act: 0., min:-10., max:10.};
             let pid = PID::new(pid_para);
-            snarl.insert_node(pos, Node::Control(ControlNode::PID(pid)));
+            snarl.insert_node(pos, Node::Control(ControlNode::PID(pid,pid_in,0.)));
             ui.close();
         }
         if ui.button("Input").clicked() {
-            snarl.insert_node(pos, Node::Control(ControlNode::Num_input(1)));
+            snarl.insert_node(pos, Node::Control(ControlNode::Num_input(0.0)));
             ui.close();
         }
 
         if ui.button("Output").clicked() {
             snarl.insert_node(pos, Node::Control(ControlNode::Num_output(1)));
+            ui.close();
+        }
+        if ui.button("PT1").clicked() {
+            snarl.insert_node(pos, Node::Control(ControlNode::PT1(pt1::new(1., 1.),0.,0.)));
             ui.close();
         }
     }

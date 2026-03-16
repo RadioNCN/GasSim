@@ -31,7 +31,7 @@ impl NodeViewer for GasNode {
         }
     }
 
-    fn show_input(&self, pin: &InPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo {
+    fn show_input(&mut self, pin: &InPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo {
         match &snarl[pin.id.node] {
             Node::Gas(GasNode::Boundary(GS, _)) => {
                 let input = pin
@@ -57,7 +57,7 @@ impl NodeViewer for GasNode {
         }
     }
 
-    fn show_output(&self, pin: &OutPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo {
+    fn show_output(&mut self, pin: &OutPin, ui: &mut Ui, snarl: &Snarl<Node>) -> PinInfo {
         match &self {
             GasNode::Boundary(GS, n) => {
                 PinInfo::square().with_fill(BoundaryType::Boundary(GS.clone()).pin_color())

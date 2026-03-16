@@ -36,6 +36,7 @@ where
     pub dt: f64,
     dI: (I, I),
     dE: (O, O),
+    pub output: O,
 }
 
 impl<I, O, Y> PID<I, O, Y>
@@ -73,15 +74,16 @@ where
             dt: para.dt,
             dI: para.dI,
             dE: para.dE,
+            output: O::zero(),
         }
     }
 
-    pub fn call(&mut self, input: PID_input<I, O>, reset: bool, reset_out: O) -> O {
+    pub fn call(&mut self, input: &PID_input<I, O>, reset: bool, reset_out: O) -> O {
         let set = norm_FN(&input.set, &self.dI.0, &self.dI.1, &self.dE.0, &self.dE.1);
         let act = norm_FN(&input.act, &self.dI.0, &self.dI.1, &self.dE.0, &self.dE.1);
         let err = set - act;
         let err_int_old = self.err_int;
-        let mut out = reset_out;
+        self.output = reset_out;
 
         if reset == false {
             self.err_int = self.err_int + err;
@@ -100,18 +102,18 @@ where
             } else {
                 outr
             };
-            out = clamped + self.offset;
+            self.output = clamped + self.offset;
         } else {
-            let outr = norm_FN(&out, &self.dE.0, &self.dE.1, &input.min, &input.max);
+            let outr = norm_FN(&self.output, &self.dE.0, &self.dE.1, &input.min, &input.max);
             self.err_int = (outr - self.Pro - self.Der) / (self.ki * self.dt);
         }
 
-        if out <= input.min || out >= input.max {
+        if self.output <= input.min || self.output >= input.max {
             self.err_int = err_int_old;
         }
 
         self.err_old = err;
-        return out;
+        return self.output;
     }
 }
 
