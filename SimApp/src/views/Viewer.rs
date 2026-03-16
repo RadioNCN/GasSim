@@ -140,6 +140,12 @@ impl SnarlViewer<Node> for Viewer {
             snarl.insert_node(pos, Node::Control(ControlNode::PT1(pt1::new(1000., 1.),0.,0.)));
             ui.close();
         }
+        if ui.button("Plot").clicked() {
+            use crate::nodes::ControlNodes::PlotHistory;
+            let histories = vec![PlotHistory::new(120.0)];
+            snarl.insert_node(pos, Node::Control(ControlNode::Plot(histories, 1)));
+            ui.close();
+        }
     }
 
     fn has_node_menu(&mut self, _node: &Node) -> bool {

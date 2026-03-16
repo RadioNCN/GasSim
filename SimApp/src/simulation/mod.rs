@@ -10,6 +10,7 @@ pub struct SimulationEngine {
     snarl: Arc<Mutex<Snarl<Node>>>,
     running: Arc<Mutex<bool>>,
     timestep: Duration,
+    start_time: Instant,
 }
 
 impl SimulationEngine {
@@ -18,6 +19,7 @@ impl SimulationEngine {
             snarl,
             running: Arc::new(Mutex::new(false)),
             timestep: Duration::from_millis(timestep_ms),
+            start_time: Instant::now(),
         }
     }
 
@@ -26,6 +28,7 @@ impl SimulationEngine {
         let snarl = Arc::clone(&self.snarl);
         let running = Arc::clone(&self.running);
         let timestep = self.timestep;
+        let start_time = self.start_time;
 
         *running.lock().unwrap() = true;
 
@@ -38,8 +41,9 @@ impl SimulationEngine {
 
                 if elapsed >= timestep {
                     // Perform simulation step
+                    let current_time = now.duration_since(start_time).as_secs_f64();
                     if let Ok(mut snarl) = snarl.lock() {
-                        Self::simulation_step(&mut snarl);
+                        Self::simulation_step(&mut snarl, current_time);
                     }
                     last_update = now;
                 }
@@ -60,13 +64,13 @@ impl SimulationEngine {
     }
 
     /// Single simulation step - processes all nodes
-    fn simulation_step(snarl: &mut Snarl<Node>) {
+    fn simulation_step(snarl: &mut Snarl<Node>, current_time: f64) {
         // Get all node IDs
         let node_ids: Vec<NodeId> = snarl.node_ids().map(|(id, _)| id).collect();
 
         // First pass: collect input values for all nodes
         for node_id in &node_ids {
-            Self::update_node_inputs(*node_id, snarl);
+            Self::update_node_inputs(*node_id, snarl, current_time);
         }
 
         // Second pass: calculate outputs for all nodes
@@ -85,11 +89,12 @@ impl SimulationEngine {
     }
 
     /// Update input values from connected nodes
-    fn update_node_inputs(node_id: NodeId, snarl: &mut Snarl<Node>) {
+    fn update_node_inputs(node_id: NodeId, snarl: &mut Snarl<Node>, current_time: f64) {
         // Get input pins for this node
         let input_count = match &snarl[node_id] {
             Node::Control(ControlNode::PID(..)) => 2,
             Node::Control(ControlNode::PT1(..)) => 1,
+            Node::Control(ControlNode::Plot(_, n)) => *n,
             _ => 0,
         };
 
@@ -117,6 +122,11 @@ impl SimulationEngine {
                         }
                         Node::Control(ControlNode::PT1(_, inp, _)) => {
                             *inp = value;
+                        }
+                        Node::Control(ControlNode::Plot(histories, _)) => {
+                            if let Some(history) = histories.get_mut(input_idx) {
+                                history.push(current_time, value);
+                            }
                         }
                         _ => {}
                     }
