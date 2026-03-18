@@ -5,6 +5,7 @@ use GasSim::modules::{PID::{PID_input, PID_para, PID}, PT1::pt1};
 use crate::nodes::GasNodes::Boundary_node::BoundaryType;
 use crate::nodes::GasNodes::GasNode;
 use std::collections::VecDeque;
+use std::time::Instant;
 
 pub mod PID_node;
 
@@ -218,6 +219,8 @@ impl NodeViewer for ControlNode {
             ControlNode::PT1(pt1, inp, out) => {
                 ui.label("T");
                 ui.add(egui::DragValue::new(&mut pt1.t).speed(0.01));
+                ui.label("K");
+                ui.add(egui::DragValue::new(&mut pt1.k).speed(0.01));
                 // ui.label(format!("Input: {:.3}", inp));
                 // ui.label(format!("Output: {:.3}", out));
                 // Calculation is done in simulation thread, not here
@@ -234,9 +237,15 @@ impl NodeViewer for ControlNode {
                 let mut min_val = f64::INFINITY;
                 let mut max_val = f64::NEG_INFINITY;
                 let mut max_time = 0.0_f64;
-                let mut min_time = 0.0_f64;
+                let mut min_time = -1.;
 
-                for history in histories.iter() {
+                for (idx, history) in histories.iter().enumerate() {
+                    if idx ==0 {
+                        min_time=match history.data.front() {
+                            Some(dp)=> dp.time,
+                            None=> 10.,
+                        }
+                    }
                     for dp in &history.data {
                         min_val = min_val.min(dp.value);
                         max_val = max_val.max(dp.value);
@@ -270,8 +279,7 @@ impl NodeViewer for ControlNode {
                         let mut points = Vec::new();
 
                         for dp in &history.data {
-                            println!("{}", rect.width());
-                            let x = rect.left() + (((dp.time) / max_time) * rect.width() as f64) as f32;
+                            let x = rect.left() + (((dp.time - min_time)/dt) * rect.width() as f64) as f32;
                             let y = rect.bottom() - (((dp.value - min_val) / range) * rect.height() as f64) as f32;
                             points.push(egui::pos2(x, y));
                         }

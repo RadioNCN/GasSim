@@ -1,7 +1,7 @@
 #[derive(Debug, Clone)]
 pub struct pt1 {
     pub t: f64,
-    k: f64,
+    pub k: f64,
     int_val: f64,
 }
 impl pt1 {
