@@ -40,6 +40,7 @@ impl PlotHistory {
         let relative_time = time - self.start_time;
         self.data.push_back(DataPoint { time: relative_time, value });
 
+
         // Remove old data points
         while let Some(front) = self.data.front() {
             if front.time < relative_time - self.max_duration {
@@ -246,7 +247,7 @@ impl NodeViewer for ControlNode {
 
                 if min_val.is_finite() && max_val.is_finite() {
                     let range = (max_val - min_val).max(0.001_f64);
-
+                    let dt = (max_time - min_time).abs();
                     // Color palette
                     let colors = [
                         egui::Color32::from_rgb(31, 119, 180),
@@ -264,15 +265,13 @@ impl NodeViewer for ControlNode {
                         if history.data.len() < 2 {
                             continue;
                         }
-                        if history.data.len() >= 1200 {
-                            history.data.remove(0);
-                        }
 
                         let color = colors[idx % colors.len()];
                         let mut points = Vec::new();
 
                         for dp in &history.data {
-                            let x = rect.left() + ((dp.time / 120.) * rect.width() as f64) as f32;
+                            println!("{}", rect.width());
+                            let x = rect.left() + (((dp.time) / max_time) * rect.width() as f64) as f32;
                             let y = rect.bottom() - (((dp.value - min_val) / range) * rect.height() as f64) as f32;
                             points.push(egui::pos2(x, y));
                         }
