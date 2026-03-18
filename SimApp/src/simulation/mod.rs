@@ -49,7 +49,7 @@ impl SimulationEngine {
                 }
 
                 // Sleep for a short time to avoid busy-waiting
-                thread::sleep(Duration::from_micros(100));
+                // thread::sleep(Duration::from_micros(100));
             }
         });
     }
