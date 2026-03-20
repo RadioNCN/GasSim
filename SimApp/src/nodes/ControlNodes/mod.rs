@@ -59,6 +59,7 @@ pub enum ControlNode {
     Num_input(f64),
     Num_output(usize),
     PT1(pt1,f64, f64),
+    Add(f64, f64, f64),
     Plot(Vec<PlotHistory>, usize), // histories for each input, number of inputs
 }
 
@@ -69,6 +70,7 @@ impl NodeViewer for ControlNode {
             ControlNode::Num_input(_) => "Number Input".to_string(),
             ControlNode::Num_output(_) => "Number Output".to_string(),
             ControlNode::PT1(_,_,_) => "PT1".to_string(),
+            ControlNode::Add(_,_,_) => "Addition".to_string(),
             ControlNode::Plot(_, _) => "Plot".to_string(),
         }
     }
@@ -79,6 +81,7 @@ impl NodeViewer for ControlNode {
             ControlNode::Num_input(_) => 0,
             ControlNode::Num_output(n) => *n,
             ControlNode::PT1(_,_,_) => 1,
+            ControlNode::Add(_,_,_) => 2,
             ControlNode::Plot(_, n) => *n,
         }
     }
@@ -90,6 +93,7 @@ impl NodeViewer for ControlNode {
                         Node::Control(ControlNode::PID(_,_, out)) => Some(out.clone()),
                         Node::Control(ControlNode::Num_input(out)) => Some(out.clone()),
                         Node::Control(ControlNode::PT1(_,_, out)) => Some(out.clone()),
+                        Node::Control(ControlNode::Add(_, _, out)) => Some(out.clone()),
                         _ => None
                     });
 
@@ -106,7 +110,30 @@ impl NodeViewer for ControlNode {
                     },
                     None => return PinInfo::circle().with_fill(egui::Color32::RED),
                 }
-                     },
+            },
+            ControlNode::Add(A, B, _) => {
+                let input = pin.remotes.last().and_then(|remote|
+                    match &snarl[remote.node] {
+                        Node::Control(ControlNode::PID(_,_, out)) => Some(out.clone()),
+                        Node::Control(ControlNode::Num_input(out)) => Some(out.clone()),
+                        Node::Control(ControlNode::PT1(_,_, out)) => Some(out.clone()),
+                        Node::Control(ControlNode::Add(_,_,out)) => Some(out.clone()),
+                        _=> None
+                    });
+                match input {
+                    Some(input) => {
+                        ControlNode::show_state(ui, &input);
+                        match pin.id.input {
+                            0 => *A = input,
+                            1 => *B = input,
+                            _=> {todo!()},
+                        }
+                        PinInfo::circle().with_fill(egui::Color32::WHITE)
+                    },
+                    None => return PinInfo::circle().with_fill(egui::Color32::RED),
+                }
+
+            },
             ControlNode::Num_input(_) => {
                 PinInfo::circle().with_fill(egui::Color32::WHITE)
             }
@@ -137,6 +164,7 @@ impl NodeViewer for ControlNode {
                         match &snarl[remote.node]{
                             Node::Control(ControlNode::PID(_,_, out)) => Some(out.clone()),
                             Node::Control(ControlNode::Num_input(out)) => Some(out.clone()),
+                            Node::Control(ControlNode::Add(_,_,out)) => Some(out.clone()),
                             _ => None
                         });
                 match input {
@@ -157,6 +185,7 @@ impl NodeViewer for ControlNode {
                             Node::Control(ControlNode::PID(_,_, out)) => Some(out.clone()),
                             Node::Control(ControlNode::Num_input(out)) => Some(out.clone()),
                             Node::Control(ControlNode::PT1(_,_, out)) => Some(out.clone()),
+                            Node::Control(ControlNode::Add(_,_,out)) => Some(out.clone()),
                             _ => None
                         });
                 match input {
@@ -176,6 +205,7 @@ impl NodeViewer for ControlNode {
             ControlNode::Num_input(_) => 1,
             ControlNode::Num_output(_) => 0,
             ControlNode::PT1(_,_,_) => 1,
+            ControlNode::Add(_,_,_) => 1,
             ControlNode::Plot(_, _) => 0,
         }
     }
@@ -186,6 +216,9 @@ impl NodeViewer for ControlNode {
                 PinInfo::circle().with_fill(egui::Color32::WHITE) },
             ControlNode::Num_output(n) => PinInfo::circle().with_fill(egui::Color32::WHITE),
             ControlNode::PT1(_,_,outp) => {
+                ui.label(format!("{:.3?}", outp));
+                PinInfo::circle().with_fill(egui::Color32::WHITE) },
+            ControlNode::Add(_,_,outp) => {
                 ui.label(format!("{:.3?}", outp));
                 PinInfo::circle().with_fill(egui::Color32::WHITE) },
              _ => PinInfo::circle().with_fill(egui::Color32::RED),

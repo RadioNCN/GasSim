@@ -144,6 +144,9 @@ impl SimulationEngine {
             ControlNode::PT1(pt1, input, output) => {
                 *output = pt1.call(*input);
             }
+            ControlNode::Add(A, B, output) => {
+                *output = *A + *B;
+            }
             _ => {}
         }
     }

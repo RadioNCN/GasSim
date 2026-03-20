@@ -142,8 +142,12 @@ impl SnarlViewer<Node> for Viewer {
         }
         if ui.button("Plot").clicked() {
             use crate::nodes::ControlNodes::PlotHistory;
-            let histories = vec![PlotHistory::new(120.0)];
+            let histories = vec![PlotHistory::new(60.0)];
             snarl.insert_node(pos, Node::Control(ControlNode::Plot(histories, 1)));
+            ui.close();
+        }
+        if ui.button("Addition").clicked() {
+            snarl.insert_node(pos, Node::Control(ControlNode::Add(0.,0.,0.)));
             ui.close();
         }
     }
